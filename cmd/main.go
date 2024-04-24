@@ -1,8 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"log/slog"
+	"os"
 	"try_go_cryptography/internal/aes"
 
 	"github.com/caarlos0/env"
@@ -10,7 +15,6 @@ import (
 
 type Config struct {
 	AESSecretKey string `env:"AES_SECRET_KEY" envDefault:"mock"`
-	RSASecretKey string `env:"RSA_SECRET_KEY" envDefault:"mock"`
 }
 
 func main() {
@@ -19,6 +23,44 @@ func main() {
 		slog.Error("cannot parse env")
 	}
 
+	// RunAES(&cfg)
+	runRSA()
+}
+
+func runRSA() {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		slog.Error("generate key is error", err)
+	}
+	publicKey := &privateKey.PublicKey
+
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	})
+
+	err = os.WriteFile("private.pem", privateKeyPEM, 0644)
+	if err != nil {
+		slog.Error("write file private key is error", err)
+	}
+
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
+	if err != nil {
+		slog.Error("marshal public key is error", err)
+	}
+	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: publicKeyBytes,
+	})
+	err = os.WriteFile("public.pem", publicKeyPEM, 0644)
+	if err != nil {
+		slog.Error("write file public key is error", err)
+	}
+
+}
+
+func RunAES(cfg *Config) {
 	ciphertext1, err := aes.Encrypt("This is some sensitive information", []byte(cfg.AESSecretKey))
 	if err != nil {
 		slog.Error("ciphertext1 error", err)
