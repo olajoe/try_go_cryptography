@@ -7,6 +7,7 @@ import (
 	"try_go_cryptography/internal/rsa"
 
 	"github.com/caarlos0/env"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -17,6 +18,10 @@ func main() {
 	cfg := Config{}
 	if err := env.Parse(&cfg); err != nil {
 		slog.Error("cannot parse env")
+	}
+
+	if err := godotenv.Load(".env"); err != nil {
+		slog.Error("Cannot load ENV from .env file")
 	}
 
 	// RunAES(&cfg)

@@ -1,0 +1,61 @@
+# Binaries, plugins, object files, shared libraries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories
+vendor/
+
+# IDEs and tools
+*.iml
+*.idea/
+*.suo
+*.netrwhist
+*.tmuxp
+.vscode/
+.history/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+*.swp
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+
+# Environment variables
+.env
+
+# Others
+*.pem
+
+# GoLand IDE
+.idea/
+
+# Compiled Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Kubernetes Generated Files
+*.gen.go
+
+# Dependency locks
+Gopkg.lock
