@@ -3,6 +3,7 @@ package rsa
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -17,9 +18,12 @@ func GenerateKeyPairs(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 }
 
 func ExportPrivateKeyAsPEMString(privateKey *rsa.PrivateKey) (string, error) {
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return "", err
+	}
 	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
+		Type:  "PRIVATE KEY",
 		Bytes: privateKeyBytes,
 	})
 
@@ -32,7 +36,7 @@ func ExportPublicKeyAsPEMString(publicKey *rsa.PublicKey) (string, error) {
 		return "", err
 	}
 	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PUBLIC KEY",
+		Type:  "PUBLIC KEY",
 		Bytes: publicKeyBytes,
 	})
 
@@ -45,12 +49,17 @@ func ImportPEMStringToPrivateKey(privateKey string) (*rsa.PrivateKey, error) {
 		return nil, errors.New("failed to decode PEM string data")
 	}
 
-	privkey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return privkey, nil
+	privKey, ok := key.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("key type is not RSA private key")
+	}
+
+	return privKey, nil
 }
 
 func ImportPEMStringToPublicKey(publicKey string) (*rsa.PublicKey, error) {
@@ -73,7 +82,8 @@ func ImportPEMStringToPublicKey(publicKey string) (*rsa.PublicKey, error) {
 }
 
 func EncryptWithPublickey(msg []byte, publicKey *rsa.PublicKey) ([]byte, error) {
-	cipherText, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, msg)
+	hash := sha256.New()
+	cipherText, err := rsa.EncryptOAEP(hash, rand.Reader, publicKey, msg, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +91,8 @@ func EncryptWithPublickey(msg []byte, publicKey *rsa.PublicKey) ([]byte, error) 
 }
 
 func DecryptWithPrivateKey(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
-	plainText, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
+	hash := sha256.New()
+	plainText, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, nil)
 	if err != nil {
 		return nil, err
 	}
