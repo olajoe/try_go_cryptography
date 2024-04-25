@@ -1,14 +1,10 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"log/slog"
-	"os"
 	"try_go_cryptography/internal/aes"
+	"try_go_cryptography/internal/rsa"
 
 	"github.com/caarlos0/env"
 )
@@ -28,36 +24,27 @@ func main() {
 }
 
 func runRSA() {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, publicKey, err := rsa.GenerateKeyPairs(2048)
 	if err != nil {
-		slog.Error("generate key is error", err)
-	}
-	publicKey := &privateKey.PublicKey
-
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privateKeyBytes,
-	})
-
-	err = os.WriteFile("private.pem", privateKeyPEM, 0644)
-	if err != nil {
-		slog.Error("write file private key is error", err)
+		slog.Error("error genrate key pairs", err)
 	}
 
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
+	sampleText := "Super secure data eiei"
+	cipherText, err := rsa.EncryptWithPublickey([]byte(sampleText), publicKey)
 	if err != nil {
-		slog.Error("marshal public key is error", err)
-	}
-	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: publicKeyBytes,
-	})
-	err = os.WriteFile("public.pem", publicKeyPEM, 0644)
-	if err != nil {
-		slog.Error("write file public key is error", err)
+		slog.Error("encrypt error", err)
 	}
 
+	plainText, err := rsa.DecryptWithPrivateKey(cipherText, privateKey)
+	if err != nil {
+		slog.Error("decrypt error", err)
+	}
+
+	if string(plainText) == sampleText {
+		fmt.Println("matched")
+	} else {
+		fmt.Println("unmatched")
+	}
 }
 
 func RunAES(cfg *Config) {
